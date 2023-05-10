@@ -13,7 +13,7 @@ plotCoordinates <- function(appState, otolithImage, inFile) {
   img <- otolithImage()
   basePlot <-
     ggplot() + annotation_custom(grid::rasterGrob(
-      as.raster(img),
+      img,
       width = unit(1, "npc"),
       height = unit(1, "npc")
     ),
@@ -22,7 +22,7 @@ plotCoordinates <- function(appState, otolithImage, inFile) {
     -Inf,
     Inf) +
     theme_void() +
-    coord_cartesian(xlim = c(0, dim(img)[3]), ylim = c(0, dim(img)[2]))
+    coord_cartesian(xlim = c(0, dim(img)[2]), ylim = c(0, dim(img)[1]))
   
   if (!is.null(appState$center)) {
     basePlot <-
@@ -101,7 +101,7 @@ server <- function(input, output, session) {
   otolithImage <- reactiveVal(NULL)
   
   observeEvent(input$otolithImage, {
-    otolithImage(magick::image_read(input$otolithImage$datapath))
+    otolithImage(readPNG(input$otolithImage$datapath))
   })
   
   #inFile <- input$otolithImage
