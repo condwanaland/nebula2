@@ -41,8 +41,9 @@ server <- function(input, output, session) {
     otolithImage(readPNG(input$otolithImage$datapath))
   })
   
-  plotCoordinates <- function(appState, otolithImage) {
-    inFile <- input$otolithImage
+  #inFile <- input$otolithImage
+  
+  plotCoordinates <- function(appState, otolithImage, inFile) {
     if (is.null(inFile)) {
       return(NULL)
     }
@@ -105,7 +106,7 @@ server <- function(input, output, session) {
   }
   
   output$otolithPlot <- renderPlot({
-    plotCoordinates(appState, otolithImage)
+    plotCoordinates(appState, otolithImage, input$otolithImage)
   }, bg = "transparent")
   
   observeEvent(input$plot_dblclick, {
@@ -115,7 +116,7 @@ server <- function(input, output, session) {
       appState$endPoint <- c(input$plot_dblclick$x, input$plot_dblclick$y)
     }
     output$otolithPlot <- renderPlot({
-      plotCoordinates(appState, otolithImage)
+      plotCoordinates(appState, otolithImage, input$otolithImage)
     }, bg = "transparent")
   })
   
@@ -134,7 +135,7 @@ server <- function(input, output, session) {
       }
     }
     output$otolithPlot <- renderPlot({
-      plotCoordinates(appState, otolithImage)
+      plotCoordinates(appState, otolithImage, input$otolithImage)
     }, bg = "transparent")
   })
   
@@ -149,7 +150,7 @@ server <- function(input, output, session) {
       hoverPoint <- c(input$plot_hover$x, input$plot_hover$y)
       isolate({
         output$otolithPlot <- renderPlot({
-          basePlot <- plotCoordinates(appState, otolithImage)
+          basePlot <- plotCoordinates(appState, otolithImage, input$otolithImage)
           
           if (!is.null(hoverPoint) &&
               !is.null(appState$center) && is.null(appState$endPoint)) {
