@@ -5,24 +5,16 @@ library(ggplot2)
 library(png)
 library(magick)
 
-plotCoordinates <- function(appState, otolithImage, inFile) {
+plotCoordinates <- function(appState, inFile) {
   if (is.null(inFile)) {
     return(NULL)
   }
   
-  img <- otolithImage()
+  img <- magick::image_read(inFile$datapath)
   basePlot <-
-    ggplot() + annotation_custom(grid::rasterGrob(
-      as.raster(img),
-      width = unit(1, "npc"),
-      height = unit(1, "npc")
-    ),
-    -Inf,
-    Inf,
-    -Inf,
-    Inf) +
-    theme_void() +
-    coord_cartesian(xlim = c(0, dim(img)[3]), ylim = c(0, dim(img)[2]))
+    image_ggplot(img) +
+    theme_void()
+  
   
   if (!is.null(appState$center)) {
     basePlot <-
@@ -100,15 +92,21 @@ server <- function(input, output, session) {
   
   otolithImage <- reactiveVal(NULL)
   
+  #observeEvent(input$otolithImage, {
+  #  otolithImage(magick::image_read(input$otolithImage$datapath))
+  #})
+  
   observeEvent(input$otolithImage, {
-    otolithImage(magick::image_read(input$otolithImage$datapath))
+    inFile <- input$otolithImage
+    if (is.null(inFile)) {
+      return(NULL)
+    }
   })
   
-  #inFile <- input$otolithImage
   
   
   output$otolithPlot <- renderPlot({
-    plotCoordinates(appState, otolithImage, input$otolithImage)
+    plotCoordinates(appState, input$otolithImage)
   }, bg = "transparent")
   
   observeEvent(input$plot_dblclick, {
@@ -118,7 +116,7 @@ server <- function(input, output, session) {
       appState$endPoint <- c(input$plot_dblclick$x, input$plot_dblclick$y)
     }
     output$otolithPlot <- renderPlot({
-      plotCoordinates(appState, otolithImage, input$otolithImage)
+      plotCoordinates(appState, input$otolithImage)
     }, bg = "transparent")
   })
   
@@ -137,7 +135,7 @@ server <- function(input, output, session) {
       }
     }
     output$otolithPlot <- renderPlot({
-      plotCoordinates(appState, otolithImage, input$otolithImage)
+      plotCoordinates(appState, input$otolithImage)
     }, bg = "transparent")
   })
   
@@ -152,7 +150,7 @@ server <- function(input, output, session) {
       hoverPoint <- c(input$plot_hover$x, input$plot_hover$y)
       isolate({
         output$otolithPlot <- renderPlot({
-          basePlot <- plotCoordinates(appState, otolithImage, input$otolithImage)
+          basePlot <- plotCoordinates(appState, input$otolithImage)
           
           if (!is.null(hoverPoint) &&
               !is.null(appState$center) && is.null(appState$endPoint)) {
