@@ -4,6 +4,68 @@ library(magrittr)
 library(ggplot2)
 library(png)
 
+plotCoordinates <- function(appState, otolithImage, inFile) {
+  if (is.null(inFile)) {
+    return(NULL)
+  }
+  
+  img <- otolithImage()
+  basePlot <-
+    ggplot() + annotation_custom(grid::rasterGrob(
+      img,
+      width = unit(1, "npc"),
+      height = unit(1, "npc")
+    ),
+    -Inf,
+    Inf,
+    -Inf,
+    Inf) +
+    theme_void() +
+    coord_cartesian(xlim = c(0, dim(img)[2]), ylim = c(0, dim(img)[1]))
+  
+  if (!is.null(appState$center)) {
+    basePlot <-
+      basePlot + geom_point(
+        aes(x = appState$center[1], y = appState$center[2]),
+        color = "blue",
+        size = 3
+      )
+  }
+  
+  if (!is.null(appState$endPoint)) {
+    basePlot <-
+      basePlot + geom_point(
+        aes(x = appState$endPoint[1], y = appState$endPoint[2]),
+        color = "red",
+        size = 3
+      ) +
+      geom_segment(
+        aes(
+          x = appState$center[1],
+          y = appState$center[2],
+          xend = appState$endPoint[1],
+          yend = appState$endPoint[2]
+        ),
+        color = "black"
+      )
+  }
+  
+  points_df <-
+    reactive({
+      data.frame(x = appState$points$x, y = appState$points$y)
+    })
+  if (nrow(points_df()) > 0) {
+    basePlot <-
+      basePlot + geom_point(data = points_df(),
+                            aes(x, y),
+                            color = "green",
+                            size = 3)
+  }
+  
+  
+  return(basePlot)
+}
+
 
 ui <- fluidPage(
   useShinyjs(),
@@ -43,67 +105,6 @@ server <- function(input, output, session) {
   
   #inFile <- input$otolithImage
   
-  plotCoordinates <- function(appState, otolithImage, inFile) {
-    if (is.null(inFile)) {
-      return(NULL)
-    }
-    
-    img <- otolithImage()
-    basePlot <-
-      ggplot() + annotation_custom(grid::rasterGrob(
-        img,
-        width = unit(1, "npc"),
-        height = unit(1, "npc")
-      ),
-      -Inf,
-      Inf,
-      -Inf,
-      Inf) +
-      theme_void() +
-      coord_cartesian(xlim = c(0, dim(img)[2]), ylim = c(0, dim(img)[1]))
-    
-    if (!is.null(appState$center)) {
-      basePlot <-
-        basePlot + geom_point(
-          aes(x = appState$center[1], y = appState$center[2]),
-          color = "blue",
-          size = 3
-        )
-    }
-    
-    if (!is.null(appState$endPoint)) {
-      basePlot <-
-        basePlot + geom_point(
-          aes(x = appState$endPoint[1], y = appState$endPoint[2]),
-          color = "red",
-          size = 3
-        ) +
-        geom_segment(
-          aes(
-            x = appState$center[1],
-            y = appState$center[2],
-            xend = appState$endPoint[1],
-            yend = appState$endPoint[2]
-          ),
-          color = "black"
-        )
-    }
-    
-    points_df <-
-      reactive({
-        data.frame(x = appState$points$x, y = appState$points$y)
-      })
-    if (nrow(points_df()) > 0) {
-      basePlot <-
-        basePlot + geom_point(data = points_df(),
-                              aes(x, y),
-                              color = "green",
-                              size = 3)
-    }
-    
-    
-    return(basePlot)
-  }
   
   output$otolithPlot <- renderPlot({
     plotCoordinates(appState, otolithImage, input$otolithImage)
